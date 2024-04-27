@@ -9,4 +9,6 @@ func RegisterTodoRoutes(group *gin.RouterGroup, db *gorm.DB) {
 	group.POST("/", CreateTodo(db))
 	group.GET("/", GetListItem(db))
 	group.GET("/:id", GetTodoItem(db))
+	group.PATCH("/:id", UpdateTodoItem(db))
+	group.DELETE("/:id", DeleteTodoItem(db))
 }

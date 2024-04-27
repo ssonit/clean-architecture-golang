@@ -53,26 +53,29 @@ func GetListItem(db *gorm.DB) func(c *gin.Context) {
 
 		paging.Process()
 
-		db = db.Where("status <> ?", "Deleted")
+		var filter models.Filter
 
-		if err := db.Table(models.TodoItem{}.TableName()).Count(&paging.Total).Error; err != nil {
+		if err := c.ShouldBind(&filter); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
 
-		if err := db.Order("id desc").
-			Offset((paging.Page - 1) * paging.Limit).
-			Limit(paging.Limit).
-			Find(&todo).Error; err != nil {
+		store := storage.NewSQLStore(db)
+
+		biz := biz.NewTodoBiz(store)
+
+		todo, err := biz.ListTodoItem(c.Request.Context(), &filter, &paging)
+
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, common.NewSuccessResponse(todo, paging, nil))
+		c.JSON(http.StatusOK, common.NewSuccessResponse(todo, paging, filter))
 	}
 }
 
@@ -102,5 +105,65 @@ func GetTodoItem(db *gorm.DB) func(c *gin.Context) {
 		}
 
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(data))
+	}
+}
+
+func UpdateTodoItem(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var todo models.TodoItemUpdate
+
+		id, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		if err := c.ShouldBind(&todo); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		store := storage.NewSQLStore(db)
+		biz := biz.NewTodoBiz(store)
+
+		if err := biz.UpdateTodo(c.Request.Context(), id, &todo); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
+	}
+}
+
+func DeleteTodoItem(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		store := storage.NewSQLStore(db)
+
+		biz := biz.NewTodoBiz(store)
+
+		if err := biz.Delete(c.Request.Context(), id); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, common.SimpleSuccessResponse(true))
 	}
 }

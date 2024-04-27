@@ -72,6 +72,10 @@ func (s *TodoItemStatus) String() string {
 	return allTodoItemStatus[*s]
 }
 
+type Filter struct {
+	Status string `json:"status" form:"status"`
+}
+
 type TodoItem struct {
 	common.SQLModel
 	Title       string          `json:"title" gorm:"column:title"`
