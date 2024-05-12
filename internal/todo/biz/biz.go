@@ -35,7 +35,7 @@ func (biz *todoBiz) Create(ctx context.Context, todo *models.TodoItemCreation) e
 	}
 
 	if err := biz.store.Create(ctx, todo); err != nil {
-		return err
+		return common.ErrCannotCreateEntity(models.EntityName, err)
 	}
 
 	return nil
@@ -55,15 +55,18 @@ func (biz *todoBiz) UpdateTodo(ctx context.Context, id int, todo *models.TodoIte
 	data, err := biz.store.GetItem(ctx, filter)
 
 	if err != nil {
-		return err
+		if err == common.RecordNotFound {
+			return common.ErrCannotGetEntity(models.EntityName, err)
+		}
+		return common.ErrCannotUpdateEntity(models.EntityName, err)
 	}
 
 	if data.Status == nil || *data.Status == models.TodoItemStatusDeleted {
-		return error_todo.ErrTodoItemIsDeleted
+		return common.ErrCannotDeleteEntity(models.EntityName, error_todo.ErrTodoItemIsDeleted)
 	}
 
 	if err := biz.store.Update(ctx, filter, todo); err != nil {
-		return err
+		return common.ErrCannotUpdateEntity(models.EntityName, err)
 	}
 	return nil
 }

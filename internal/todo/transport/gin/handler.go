@@ -1,6 +1,7 @@
 package gin_http
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -29,9 +30,7 @@ func CreateTodo(db *gorm.DB) func(c *gin.Context) {
 		biz := biz.NewTodoBiz(storage)
 
 		if err := biz.Create(c.Request.Context(), &todo); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, err)
 			return
 		}
 
@@ -115,26 +114,22 @@ func UpdateTodoItem(db *gorm.DB) func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.ErrInvalidRequest(err))
 			return
 		}
 
 		if err := c.ShouldBind(&todo); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, common.ErrInvalidRequest(err))
 			return
 		}
+
+		fmt.Println(todo)
 
 		store := storage.NewSQLStore(db)
 		biz := biz.NewTodoBiz(store)
 
 		if err := biz.UpdateTodo(c.Request.Context(), id, &todo); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
+			c.JSON(http.StatusBadRequest, err)
 			return
 		}
 

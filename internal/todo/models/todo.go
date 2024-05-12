@@ -8,6 +8,10 @@ import (
 	error_todo "github.com/ssonit/clean-architecture/internal/todo"
 )
 
+const (
+	EntityName = "Todo"
+)
+
 type TodoItemStatus int
 
 const (

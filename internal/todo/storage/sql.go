@@ -20,7 +20,7 @@ func NewSQLStore(db *gorm.DB) *sqlStore {
 
 func (s *sqlStore) Create(ctx context.Context, todo *models.TodoItemCreation) error {
 	if err := s.db.Create(&todo).Error; err != nil {
-		return err
+		return common.ErrDB(err)
 	}
 	return nil
 }
@@ -28,6 +28,9 @@ func (s *sqlStore) Create(ctx context.Context, todo *models.TodoItemCreation) er
 func (s *sqlStore) GetItem(ctx context.Context, filter map[string]interface{}) (*models.TodoItem, error) {
 	var todo models.TodoItem
 	if err := s.db.Where(filter).First(&todo).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, common.RecordNotFound
+		}
 		return nil, err
 	}
 
@@ -36,7 +39,7 @@ func (s *sqlStore) GetItem(ctx context.Context, filter map[string]interface{}) (
 
 func (s *sqlStore) Update(ctx context.Context, filter map[string]interface{}, todo *models.TodoItemUpdate) error {
 	if err := s.db.Where(filter).Updates(&todo).Error; err != nil {
-		return err
+		return common.ErrDB(err)
 	}
 	return nil
 }
